@@ -1,3 +1,16 @@
+// Title:			iconn.c
+// Creator:			John Coleman
+// Creation Date:		09/04/2023
+// Modification Date:        	10/28/2023
+// Desscription:             
+// A networking tool for testing various layers of the network stack in Linux.
+// At the moment the tool only acts like a basic `socat` command would to where
+// it receives traffic from a peer, and responds with that peers source IP and
+// source ephemeral port.  This is very useful with container network implementation
+// troubleshooting.
+//
+// Progress:			Work in progress.
+
 #include <stdio.h>
 #include <stdlib.h>
 
