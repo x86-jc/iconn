@@ -1,7 +1,7 @@
 // Title:			iconn.c
 // Creator:			John Coleman
 // Creation Date:		09/04/2023
-// Modification Date:        	10/28/2023
+// Modification Date:        	08/23/2024
 // Desscription:             
 // A networking tool for testing various layers of the network stack in Linux.
 // At the moment the tool only acts like a basic `socat` command would to where
@@ -18,65 +18,68 @@
 #include <sys/socket.h>
 
 #include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include <unistd.h>
 
 
-#define RBUF 512
+#define RECEIVE_BUFFER 512
 
 int main(int argc, char *argv[])
 {
 	
 	// socket creation
-	int lsock;
-	lsock = socket(AF_INET,SOCK_STREAM,0);
+	int listener;
+	listener = socket(AF_INET,SOCK_STREAM,0);
 
 	// construct listener address and peer address
-	struct sockaddr_in hostaddr, peeraddr;
-	hostaddr.sin_family 			= AF_INET;
-	hostaddr.sin_port   			= htons(50080);
-	hostaddr.sin_addr.s_addr		= INADDR_ANY;
+	struct sockaddr_in host_address, peer_address;
+	host_address.sin_family 			= AF_INET;
+	host_address.sin_port   			= htons(50080);
+	host_address.sin_addr.s_addr			= INADDR_ANY;
 
-	char response[RBUF];
+	char response[RECEIVE_BUFFER];
 	int i = 0;
-	while(i<RBUF)
+	while(i<RECEIVE_BUFFER)
 	{
 		response[i] = '\0';
 		i++;
 	}
-	char ip[sizeof(peeraddr)];
+	char ip[sizeof(peer_address)];
 
 	// bind net tuple to socket
-	bind(lsock,(struct sockaddr*)&hostaddr,sizeof(hostaddr));
+	bind(listener, (struct sockaddr*)&host_address, sizeof(host_address));
 
 	// listener socket
-	listen(lsock,100);
+	listen(listener,100);
 
 	// create socket for peer
-	int peersock;
-	int peersock_size = sizeof(struct sockaddr_in);
+	int peer_socket;
+	int peer_socket_size = sizeof(struct sockaddr_in);
 	
 	while(1)
 	{
-		peersock = accept(lsock,(struct sockaddr*)&peeraddr,&peersock_size);
-		if(peersock>1)
+		peer_socket = accept(listener, (struct sockaddr*)&peer_address, &peer_socket_size);
+		if(peer_socket>1)
 		{
 			fprintf(stdout, "Created socket for peer.\n\n");
 		}
 		else
 		{
-			fprintf(stdout, "error creating socket for peer.  Returned: %d", peersock);
+			fprintf(stdout, "error creating socket for peer.  Returned: %d", peer_socket);
 			return 99;
 		}
 
-		inet_ntop(AF_INET, &(peeraddr.sin_addr.s_addr), ip, sizeof(peeraddr));
-		fprintf(stdout, "peer returned value: %x\naddress size: %d\n\n", ntohl(peeraddr.sin_addr.s_addr), sizeof(peeraddr));
-		sprintf(response, "\n\nRequestor IP: %s\nRequestor Port: %d\n\n", ip, ntohs(peeraddr.sin_port));
-		//response[sizeof(peeraddr)+1] = '\n';
+		inet_ntop(AF_INET, &(peer_address.sin_addr.s_addr), ip, sizeof(peer_address));
+		fprintf(stdout, "peer returned value: %x\naddress size: %d\n\n", ntohl(peer_address.sin_addr.s_addr), sizeof(peer_address));
+		sprintf(response, "\n\nRequestor IP: %s\nRequestor Port: %d\n\n", ip, ntohs(peer_address.sin_port));
+		//response[sizeof(peer_address)+1] = '\n';
 
 		// reply
-		send(peersock,response,sizeof(response),0);
+		send(peer_socket, response, sizeof(response), 0);
 
 		// close out serving socket
-		close(peersock);
+		close(peer_socket);
 	}
 
 	return 0;
